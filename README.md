@@ -1,3 +1,4 @@
 # cw.nettt
 personal site WIP
-live at charliewindolf.com
+
+live [here](http://charliewindolf.com)
