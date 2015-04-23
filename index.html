@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
+<script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+<script src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./window.css">
+<script src="./pred-prey.js"></script>
+<script src="./window.js"></script>
+
+</head>
+<body>
+
+<p class="restart">&#x21bb;</p>
+
+
+<script>
+
+function normalize(x) {
+	return x;
+};
+/**
+ * Converts an HSL color value to RGB. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes h, s, and l are contained in the set [0, 1] and
+ * returns r, g, and b in the set [0, 255].
+ *
+ * @param   Number  h       The hue
+ * @param   Number  s       The saturation
+ * @param   Number  l       The lightness
+ * @return  Array           The RGB representation
+ */
+function hslToRgb(h, s, l){
+    var r, g, b;
+
+    if (s == 0) {
+        r = g = b = l; // achromatic
+    } else {
+        var hue2rgb = function hue2rgb(p, q, t){
+            if(t < 0) t += 1;
+            if(t > 1) t -= 1;
+            if(t < 1/6) return p + (q - p) * 6 * t;
+            if(t < 1/2) return q;
+            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        }
+
+        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+    }
+
+    var rs = Math.round(r * 255).toString(16);
+    var gs = Math.round(g * 255).toString(16);
+    var bs = Math.round(b * 255).toString(16);
+
+    rs = (rs.length > 1) ? rs : "0" + rs;
+    gs = (gs.length > 1) ? gs : "0" + gs;
+    bs = (bs.length > 1) ? bs : "0" + bs;
+
+    return "#" + rs + gs + bs;
+};
+
+var TID = undefined;
+var animate = function() {
+	if (TID) clearInterval(TID);
+
+	var pp = new Model (Math.random(),Math.random(),Math.random(),Math.random(),Math.random(),Math.random());
+	var $bg = $("body");
+
+	TID = setInterval(function () {
+		var c = hslToRgb(pp.x, pp.y, 0.75);
+		// console.log("Color: " + c.length);
+		$bg.css("background-color", c);
+		pp.step(.001);
+	}, 1);
+};
+animate();
+
+$("body .restart").click(animate);
+
+
+var menu = new Window ("Charlie Windolf", "Yo", false, "150px", "300px");
+menu.display($("body"), "5%", "5%");
+
+</script>
+
+</body>
+</html>
