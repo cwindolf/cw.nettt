@@ -7,6 +7,7 @@ function Window (title, content, close, width, height) {
 	this.id = Date.now();
 	this.width = width;
 	this.height = height;
+	this.close = close;
 
 	this.html = "<div class='dragme' data-window-id='" + this.id + "'>" +
 					"<div class='handle'>" + this.title  + (close ? "<p class='x'>&times;</p>" : "") + "</div>" +
@@ -22,8 +23,15 @@ function Window (title, content, close, width, height) {
 		$w.css("width", this.width);
 		$w.css("height", this.height);
 
-		if (close)
-			$w.children("p.x").click(this.destroy);
+		$(".dragme").not($w).css("z-index", 9);
+		$w.css("z-index", 10);
+
+		if (this.close) {
+			var self = this;
+			$(".dragme[data-window-id='" + this.id + "'] p.x").click(function() {
+				self.destroy();
+			});
+		}
 
 		$w.draggable({ handle: ".handle" });
 
@@ -35,5 +43,11 @@ function Window (title, content, close, width, height) {
 
 	this.destroy = function() {
 		$(".dragme[data-window-id='" + this.id + "']").remove();
+	};
+
+	this.button = function(text, action) {
+		$(".dragme[data-window-id='" + this.id + "'] .handle").append("<span class='button'>" + text + "</span>");
+		var b = $(".dragme[data-window-id='" + this.id + "'] .handle").children(".button").last();
+		b.click(action);
 	};
 };

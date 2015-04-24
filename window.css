@@ -1,4 +1,7 @@
 /* pls! <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css"> */
+b {
+	font-weight: bold;
+}
 
 #new {
 	position: fixed;
@@ -25,7 +28,7 @@
 .dragme .handle {
 	border-bottom: 1px dashed black;
 	height: 1em;
-	width: 100%;
+	width: 99.8%;
 	position: absolute;
 	font-weight: bold;
 	top: 0px;
@@ -45,12 +48,27 @@
 	float: right;
 	margin-right: 4px;
 	font-size: 1em;
-	cursor: default;
+	cursor: pointer;
+	z-index: 11;
+}
+
+.dragme .handle .button {
+	font-size: 1em;
+	font-weight: normal;
+	margin-left: 1em;
+	cursor: pointer;
 }
 
 .content {
-	padding: 1px;
+	padding: .2em;
 	margin-top: 1.2em;
+	height: calc(100% - 1.6em);
+}
+
+.content hr {
+	border-top: 1px dashed black;
+	color: #fff;
+	background-color: #fff;
 }
 
 .noselect {

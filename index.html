@@ -10,18 +10,16 @@
 <link rel="stylesheet" href="./window.css">
 <script src="./pred-prey.js"></script>
 <script src="./window.js"></script>
+<script src="./conway.js"></script>
 
 </head>
 <body>
 
-<p class="restart">&#x21bb;</p>
+<p class="restart noselect">&#x21bb;</p>
 
 
 <script>
 
-function normalize(x) {
-	return x;
-};
 /**
  * Converts an HSL color value to RGB. Conversion formula
  * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
@@ -82,11 +80,46 @@ var animate = function() {
 };
 animate();
 
-$("body .restart").click(animate);
+$("body .restart").click(function() {
+	if (rt) clearInterval(rt);
+	animate();
+});
 
 
-var menu = new Window ("Charlie Windolf", "Yo", false, "150px", "300px");
+/// conway stuff
+function conwayWindow() {
+	var width = Math.round($(window).width() * .8);
+	var height = Math.round($(window).height() * .8);
+	var cw = new Window("Conway's Game of Life", "", true, width, height)
+	cw.display($("body"),"10%","10%");
+	var $ctnr = $(".dragme[data-window-id='" + cw.id + "'] .content");
+	var conway = new Conway($ctnr);
+	cw.button("-Clear", function() {
+	 	conway.clear();
+	});
+	cw.button("-reSeed", function() {
+		conway.randomSeed();
+	});
+	cw.button("+Glider", function() {
+		conway.glider();
+	});
+	cw.button("+GliderGun", function() {
+		conway.gliderGun();
+	});
+	cw.button("+Puffer", function() {
+		conway.puffer();
+	});
+	conway.loop();
+};
+
+
+var menu = new Window ("Charlie Windolf", 
+	"'Sup, newcomers! This is a fun place, where you can have a good time.<hr><b>Things to do here:</b><br><ul id='menu'><li id='c'>Conway</li></ul>",
+	false,
+	"200px", "300px");
 menu.display($("body"), "5%", "5%");
+
+$("#c").click(conwayWindow);
 
 </script>
 

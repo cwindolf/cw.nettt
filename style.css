@@ -5,4 +5,15 @@ body .restart {
 	color: white;
 	font-size: 1.5em;
 	font-weight: 900;
+	cursor: pointer;
+	font-family: "Courier New", monospace;
+}
+
+#menu li {
+	cursor: pointer;
+	font-style: italic;
+	border: 1px dashed black;
+	margin: .5em 1em;
+	padding: .2em;
+	text-align: center;
 }
