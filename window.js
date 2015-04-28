@@ -19,7 +19,6 @@ function Window (title, content, close, width, height) {
 		var $w = $(".dragme[data-window-id='" + this.id + "']");
 		$w.css("top", y);
 		$w.css("left", x);
-		console.log(this);
 		$w.css("width", this.width);
 		$w.css("height", this.height);
 

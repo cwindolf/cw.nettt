@@ -3,7 +3,6 @@
 //   dy/dt = dxy - cy = g(x,y)
 //   @Params: a,b,c,d,xo,yo > 0, all reals
 function Model (a,b,c,d,xo,yo) {
-	console.log("Model: a:" + a + " b:" + b + " c:" + c + " d:" + d + " xo:" + xo + " yo:" + yo);
 	this.t = 0;
 	this.a = a;
 	this.b = b;

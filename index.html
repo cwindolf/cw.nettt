@@ -5,12 +5,15 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
 <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
 <script src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.9.22/paper-core.min.js"></script>
 
-<link rel="stylesheet" href="./style.css">
-<link rel="stylesheet" href="./window.css">
 <script src="./pred-prey.js"></script>
 <script src="./window.js"></script>
 <script src="./conway.js"></script>
+<script type="text/javascript" src="./pond.js"></script>
+
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./window.css">
 
 </head>
 <body>
@@ -19,7 +22,6 @@
 
 
 <script>
-
 /**
  * Converts an HSL color value to RGB. Conversion formula
  * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
@@ -81,7 +83,6 @@ var animate = function() {
 animate();
 
 $("body .restart").click(function() {
-	if (rt) clearInterval(rt);
 	animate();
 });
 
@@ -112,15 +113,23 @@ function conwayWindow() {
 	conway.loop();
 };
 
+function pondWindow() {
+	var width = Math.round($(window).width() * .8);
+	var height = Math.round($(window).height() * .8);
+	var pw = new Window("Pond", "", true, width, height)
+	pw.display($("body"),"10%","10%");
+	var $ctnr = $(".dragme[data-window-id='" + pw.id + "'] .content");
+	var pond = new Pond($ctnr);
+};
 
 var menu = new Window ("Charlie Windolf", 
-	"'Sup, newcomers! This is a fun place, where you can have a good time.<hr><b>Things to do here:</b><br><ul id='menu'><li id='c'>Conway</li></ul>",
+	"'Sup, newcomers! This is a fun place, where you can have a good time.<hr><b>Things to do here:</b><br><ul id='menu'><li id='c'>Conway</li><li id='p'>Pond</li></ul>",
 	false,
 	"200px", "300px");
 menu.display($("body"), "5%", "5%");
 
 $("#c").click(conwayWindow);
-
+$("#p").click(pondWindow);
 </script>
 
 </body>

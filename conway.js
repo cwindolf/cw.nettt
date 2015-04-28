@@ -17,7 +17,7 @@ function Conway($container) {
 	this.canvas.setAttribute("id", "conway");
 	this.canvas.setAttribute("width", this.width);
 	this.canvas.setAttribute("height", this.height);
-	$container.append($(this.canvas));
+	this.$container.append($(this.canvas));
 	this.context = this.canvas.getContext("2d");
 	this.context.imageSmoothingEnabled= false;
 
