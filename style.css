@@ -15,5 +15,8 @@ body .restart {
 	border: 1px dashed black;
 	margin: .5em 1em;
 	padding: .2em;
+}
+
+.center {
 	text-align: center;
 }

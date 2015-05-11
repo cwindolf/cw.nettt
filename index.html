@@ -6,8 +6,9 @@
 <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
 <script src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.9.22/paper-core.min.js"></script>
+<script src="http://threejs.org/build/three.min.js"></script>
 
-<script type="text/javascript" src="./cw.min.js"></script>
+<script src="./cw.min.js"></script>
 
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./window.css">
@@ -88,10 +89,12 @@ $("body .restart").click(function() {
 function conwayWindow() {
 	var width = Math.round($(window).width() * .8);
 	var height = Math.round($(window).height() * .8);
-	var cw = new Window("Conway's Game of Life", "", true, width, height)
+	var cw = new Window("Conway's Game of Life", "", true, width, height);
 	cw.display($("body"),"10%","10%");
 	var $ctnr = $(".dragme[data-window-id='" + cw.id + "'] .content");
 	var conway = new Conway($ctnr);
+	cw.onClose = conway.destroy;
+
 	cw.button("-Clear", function() {
 	 	conway.clear();
 	});
@@ -113,20 +116,30 @@ function conwayWindow() {
 function pondWindow() {
 	var width = Math.round($(window).width() * .8);
 	var height = Math.round($(window).height() * .8);
-	var pw = new Window("Pond", "", true, width, height)
+	var pw = new Window("Pond", "", true, width, height);
 	pw.display($("body"),"10%","10%");
 	var $ctnr = $(".dragme[data-window-id='" + pw.id + "'] .content");
 	var pond = new Pond($ctnr);
 };
 
+function exploreWindow() {
+	var width = Math.round($(window).width() * .8);
+	var height = Math.round($(window).height() * .8);
+	var ew = new Window("Explore", "", true, width, height);
+	ew.display($("body"), "10%", "10%");
+
+	var explorer = new Explorer($(".dragme[data-window-id='" + ew.id + "'] .content"));
+}
+
 var menu = new Window ("Charlie Windolf", 
-	"'Sup, newcomers! This is a fun place, where you can have a good time.<hr><b>Things to do here:</b><br><ul id='menu'><li id='c'>Conway</li><li id='p'>Pond</li></ul>",
+	"Welcome to my website! This is where I put little things I'm working on for fun.<hr><b>Things to do here:</b><br><ul id='menu' class='center'><li id='c'>Conway</li><li id='e'>Explorer <b>WIP</b></li><li id='p'>Pond</li></ul><hr><div class='center'><a href='https://github.com/cwindolf/cw.nettt'>Source</a></div>",
 	false,
 	"200px", "300px");
 menu.display($("body"), "5%", "5%");
 
 $("#c").click(conwayWindow);
 $("#p").click(pondWindow);
+$("#e").click(exploreWindow);
 </script>
 
 </body>

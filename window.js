@@ -55,4 +55,8 @@ function Window (title, content, close, width, height) {
 		var b = $(".dragme[data-window-id='" + this.id + "'] .handle").children(".button").last();
 		b.click(action);
 	};
+
+	this.jqObj = function() {
+		return $(".dragme[data-window-id='" + this.id + "']");
+	};
 };
