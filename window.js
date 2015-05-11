@@ -8,6 +8,7 @@ function Window (title, content, close, width, height) {
 	this.width = width;
 	this.height = height;
 	this.close = close;
+	this.onClose = null; // window close handler 4 cleanup
 
 	this.html = "<div class='dragme' data-window-id='" + this.id + "'>" +
 					"<div class='handle'>" + this.title  + (close ? "<p class='x'>&times;</p>" : "") + "</div>" +
@@ -40,7 +41,12 @@ function Window (title, content, close, width, height) {
 		});
 	};
 
-	this.destroy = function() {
+	this.destroy = function() {	
+		console.log(this.onClose);	
+		if (this.onClose) {
+			console.log("close callback");
+			this.onClose.call();
+		}
 		$(".dragme[data-window-id='" + this.id + "']").remove();
 	};
 

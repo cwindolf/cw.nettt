@@ -2,6 +2,7 @@ function Conway($container) {
 	this.state = [];
 	this.width = Math.round($container.width());
 	this.height = Math.round($container.height());
+	this.loopid = null;
 
 	// init empty board
 	for (var x = 0; x < this.width; x++) {
@@ -46,10 +47,15 @@ function Conway($container) {
 	// seed the game
 	this.loop = function() {
 		var self = this;
-		setInterval(function() {
+		this.loopid = setInterval(function() {
+			console.log("looping");
 			self.context.putImageData(self.toImage(), 0, 0);
 			self.next();
 		}, 100);
+	};
+
+	this.destroy = function() {
+		clearInterval(this.loopid);
 	};
 
 

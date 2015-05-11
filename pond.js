@@ -7,13 +7,15 @@ function PondPoint (x, v) {
 // requires paper.js
 function Pond ($ctnr) {
 	var self = this; // <3 JS!
+	this.paperScope = new paper.PaperScope(); // so we can reuse this code
+	this.paperScope.activate();
 	this.INSET = 50;
 	this.E = .2;
 	this.$ctnr = $ctnr;
 	this.width = Math.round($ctnr.width());
 	this.height = Math.round($ctnr.height());
 	this.canvas = document.createElement("canvas");
-	$(this.canvas).css("background-color", "#006699");
+	$(this.canvas).css("background-color", "#006699"); // <-- key aspect of the pond-ness
 	this.canvas.setAttribute("id", "pond");
 	this.canvas.setAttribute("width", this.width);
 	this.canvas.setAttribute("height", this.height);
@@ -22,16 +24,14 @@ function Pond ($ctnr) {
 
 	paper.setup("pond");
 
-	this.ripples = []; // store paths as arrays of PondPoints
-	this.pathsGroup = new paper.Group();
+	this.ripples = []; // store paths as arrays of PondPoints, to be stepped & rendered
+	this.pathsGroup = new paper.Group(); // store current rendered paths, for ease of removal
 
+	// the shore is where the waves start coming back to the center, used in this.step
 	var spoint = new paper.Point(this.INSET,this.INSET);
 	var ssize = new paper.Size(self.width - this.INSET * 2, self.height - this.INSET * 2);;
 	this.shore = new paper.Path.Rectangle(spoint, ssize);
 	this.shore.visible = false;
-
-	// this.bg = new paper.Path.Rectangle(paper.view.bounds);
-	// this.bg.fillColor = "blue";
 
 	this.render = function() {
 		this.pathsGroup.removeChildren();
