@@ -13,6 +13,7 @@
 <script src="./conway.js"></script>
 <script type="text/javascript" src="./pond.js"></script>
 <script type="text/javascript" src="./explorer.js"></script>
+<script type="text/javascript" src="./rule.js"></script>
 
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./window.css">
@@ -132,18 +133,33 @@ function exploreWindow() {
 	var ew = new Window("Explore", "", true, width, height);
 	ew.display($("body"), "10%", "10%");
 
-	var explorer = new Explorer($(".dragme[data-window-id='" + ew.id + "'] .content"));
-}
+	var amerigo_vespucci = new Explorer($(".dragme[data-window-id='" + ew.id + "'] .content"));
+};
 
-var menu = new Window ("Charlie Windolf", 
-	"Welcome to my website! This is where I put little things I'm working on for fun.<hr><b>Things to do here:</b><br><ul id='menu' class='center'><li id='c'>Conway</li><li id='e'>Explorer <b>WIP</b></li><li id='p'>Pond</li></ul><hr><div class='center'><a href='https://github.com/cwindolf/cw.nettt'>Source</a></div>",
+function ruleWindow() {
+	var width = Math.round($(window).width() * .4);
+	var height = Math.round($(window).height() * .8);
+	var rw = new Window("Rule 110", "", true, width, height);
+	rw.display($("body"), "30%", "10%");
+	var $ctnr = $(".dragme[data-window-id='" + rw.id + "'] .content");
+	var jaRule = new RuleOneTen($ctnr); // new hotness
+	rw.onClose = jaRule.destroy;
+	rw.button("-reSeed", function() {
+		jaRule.reSeed();
+	});
+	jaRule.loop();
+};
+
+var menu = new Window ("Charlie Windolf's Home Page", 
+	"This is my website. Welcome to it! I made it for you <33<hr><b>Things to do here:</b><br><ul id='menu' class='center'><li id='c'>Conway</li><li id='e'>Explorer <b>WIP</b></li><li id='p'>Pond</li><li id='r'>Rule 110</li></ul><hr><div class='center'><a href='https://github.com/cwindolf/cw.nettt'>Source</a></div>",
 	false,
-	"200px", "300px");
+	"300px", "");
 menu.display($("body"), "5%", "5%");
 
 $("#c").click(conwayWindow);
 $("#p").click(pondWindow);
 $("#e").click(exploreWindow);
+$("#r").click(ruleWindow);
 </script>
 
 </body>

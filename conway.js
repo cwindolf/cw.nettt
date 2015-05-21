@@ -1,4 +1,5 @@
 function Conway($container) {
+	var self = this; // love JS!
 	this.state = [];
 	this.width = Math.round($container.width());
 	this.height = Math.round($container.height());
@@ -54,8 +55,9 @@ function Conway($container) {
 		}, 100);
 	};
 
+	// cleanup tasks
 	this.destroy = function() {
-		clearInterval(this.loopid);
+		clearInterval(self.loopid);
 	};
 
 
