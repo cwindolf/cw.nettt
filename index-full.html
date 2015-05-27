@@ -14,6 +14,7 @@
 <script type="text/javascript" src="./pond.js"></script>
 <script type="text/javascript" src="./explorer.js"></script>
 <script type="text/javascript" src="./rule.js"></script>
+<script type="text/javascript" src="./bathtub.js"></script>
 
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./window.css">
@@ -22,7 +23,7 @@
 <body>
 
 <p class="restart noselect">&#x21bb;</p>
-
+<div id="pp"><div id="point"></div></div>
 
 <script>
 /**
@@ -68,7 +69,13 @@ function hslToRgb(h, s, l){
 
     return "#" + rs + gs + bs;
 };
+var movept = function(x, y) {
+	if (x > 1) x = 1;
+	if (y > 1) y = 1;
 
+	$("#point").css("top", 4 * (1 - y) + "em");
+	$("#point").css("left", 4 * x + "em");
+};
 var TID = undefined;
 var animate = function() {
 	if (TID) clearInterval(TID);
@@ -80,6 +87,7 @@ var animate = function() {
 		var c = hslToRgb(pp.x, pp.y, 0.75);
 		// console.log("Color: " + c.length);
 		$bg.css("background-color", c);
+		movept(pp.x,pp.y);
 		pp.step(.001);
 	}, 1);
 };
@@ -150,12 +158,22 @@ function ruleWindow() {
 	jaRule.loop();
 };
 
+function bathtubWindow() {
+	var bw = new Window("Bathtub", "", true, 500, 500);
+	bw.display($("body"), "20%", "20%");
+	var $ctnr = $(".dragme[data-window-id='" + bw.id + "'] .content");
+	var btub = new CanvasBathtub($ctnr);
+	bw.onClose = btub.cleanup;
+	btub.loop();
+};
+
 var menu = new Window ("Charlie Windolf's Home Page", 
-	"This is my website. Welcome to it! I made it for you <33<hr><b>Things to do here:</b><br><ul id='menu' class='center'><li id='c'>Conway</li><li id='e'>Explorer <b>WIP</b></li><li id='p'>Pond</li><li id='r'>Rule 110</li></ul><hr><div class='center'><a href='https://github.com/cwindolf/cw.nettt'>Source</a></div>",
+	"This is my website. Welcome to it! I made it for you <33<hr><b>Things to do here:</b><br><ul id='menu' class='center'><li id='b'>Bathtub</li><li id='c'>Conway</li><li id='e'>Explorer <b>WIP</b></li><li id='p'>Pond</li><li id='r'>Rule 110</li></ul><hr><div class='center'><a href='https://github.com/cwindolf/cw.nettt'>Source</a></div>",
 	false,
 	"300px", "");
 menu.display($("body"), "5%", "5%");
 
+$("#b").click(bathtubWindow);
 $("#c").click(conwayWindow);
 $("#p").click(pondWindow);
 $("#e").click(exploreWindow);

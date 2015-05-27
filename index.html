@@ -64,7 +64,16 @@ function hslToRgb(h, s, l){
     return "#" + rs + gs + bs;
 };
 
-var TID = undefined;
+var movept = function(x, y) {
+	console.log("pt");
+	if (x > 1) x = 1;
+	if (y > 1) y = 1;
+
+	$("#point").css("top", 4 * (1 - y) + "em");
+	$("#point").css("left", 4 * x + "em");
+};
+
+var TID;
 var animate = function() {
 	if (TID) clearInterval(TID);
 
@@ -73,8 +82,8 @@ var animate = function() {
 
 	TID = setInterval(function () {
 		var c = hslToRgb(pp.x, pp.y, 0.75);
-		// console.log("Color: " + c.length);
 		$bg.css("background-color", c);
+		movept(pp.x, pp.y);
 		pp.step(.001);
 	}, 1);
 };

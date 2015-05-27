@@ -1,4 +1,4 @@
-body .restart {
+.restart {
 	position: absolute;
 	right: .5em;
 	top: .5em;
@@ -19,4 +19,23 @@ body .restart {
 
 .center {
 	text-align: center;
+}
+
+#pp {
+	position: fixed;
+	bottom: 5px;
+	left: 5px;
+	z-index: -99;
+	border-left: 1px dashed black;
+	border-bottom: 1px dashed black;
+	width: 4em;
+	height: 4em;
+	background:;
+}
+
+#point {
+	width: 1px;
+	height: 1px;
+	position: relative;
+	background-color: black;
 }
