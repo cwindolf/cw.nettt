@@ -38,7 +38,7 @@
 //		LENGTH		-   the physical side length of the bathtub
 // 		n_o			-	QUANTxQUANT float array. initial value for column height.
 //		u_o, v_o	-	same. IV for velocity. must conform to reflective BCs above.
-function SWE(QUANT, LENGTH, n_o, u_o, v_o, g, omega) {
+function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 	this.QUANT = QUANT || 100;
 	this.LENGTH = LENGTH || 10;
 	this.dd = this.LENGTH / this.QUANT;
@@ -59,7 +59,6 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g, omega) {
 	this.u = u_o || this.n.map(function(a) { return a.map(function() { return 0; }) }); // backup is a correct-sized
 	this.v = v_o || this.n.map(function(a) { return a.map(function() { return 0; }) }); // array of zeros
 	this.g = g || -9.807; // meters per second^2
-	this.omega = omega || 1; // this is a relation param used in the step function
 	this.H = 1; // calculate the average water height in the IC
 
 	// System
@@ -84,12 +83,28 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g, omega) {
 	};
 	// step function helpers
 	this.U_half_h = function(i_lo, i_hi, j, dt) {
-		return (this.U(i_hi, j) + this.U(i_lo, j)) * 0.5
-				- (dt / (2 * this.dd)) * (this.F(this.U(i_hi, j)) - this.F(this.U(i_lo, j)));
+		var uhi = this.U(i_hi, j);
+		var ulo = this.U(i_lo, j);
+		var fhi = this.F(uhi);
+		var flo = this.F(ulo);
+		return [(uhi[0] + ulo[0]) * 0.5
+				- (dt / (2 * this.dd)) * (fhi[0] - flo[0]),
+				(uhi[1] + ulo[1]) * 0.5
+				- (dt / (2 * this.dd)) * (fhi[1] - flo[1]),
+				(uhi[2] + ulo[2]) * 0.5
+				- (dt / (2 * this.dd)) * (fhi[2] - flo[2])];
 	};
 	this.U_half_v = function(i, j_lopez, j_hi, dt) {
-		return (this.U(i, j_lopez) + this.U(i, j_hi)) * 0.5 
-				- (dt / (2 * this.dd)) * (this.G(this.U(i, j_hi)) - this.G(this.U(i, j_lopez)));
+		var uhi = this.U(i, j_hi);
+		var ulo = this.U(i, j_lopez);
+		var ghi = this.G(uhi);
+		var glo = this.G(ulo);
+		return [(uhi[0] + ulo[0]) * 0.5
+				- (dt / (2 * this.dd)) * (ghi[0] - glo[0]),
+				(uhi[1] + ulo[1]) * 0.5
+				- (dt / (2 * this.dd)) * (ghi[1] - glo[1]),
+				(uhi[2] + ulo[2]) * 0.5
+				- (dt / (2 * this.dd)) * (ghi[2] - glo[2])];
 	};
 	// numerically step the system by time-diff dt
 	// use Lax-Wendroff scheme above
@@ -98,26 +113,32 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g, omega) {
 		this.new_u = this.u;
 		this.new_v = this.v;
 		var uhhlo, uhhhi, uhvlo, uhvhi, new_U_xy;
-		var fh, fl, gh, gl
+		var fh, fl, gh, gl;
+		var dtdd = dt / this.dd;
 		for (var i = 0; i < this.QUANT; i++) {
 			for (var j = 0; j < this.QUANT; j++) { // now in ass-polynomial time
-				uhhlo = this.U_half_h(i - 1, i, j);
-				uhhhi = this.U_half_h(i, i + 1, j);
-				uhvlo = this.U_half_v(i, j - 1, j);
-				uhvhi = this.U_half_v(i, j, j + 1);
+				uhhlo = this.U_half_h(i - 1, i, j, dt);
+				uhhhi = this.U_half_h(i, i + 1, j, dt);
+				uhvlo = this.U_half_v(i, j - 1, j, dt);
+				uhvhi = this.U_half_v(i, j, j + 1, dt);
 
 				fh = this.F(uhhhi);
 				fl = this.F(uhhlo);
 				gh = this.G(uhvhi);
 				gl = this.G(uhvlo);
-				
-				new_U_xy = [this.U(i,j)[0] - (dt / this.dd) * (fh[0] - fl[0] + gh[0] - gl[0]),
-							this.U(i,j)[1] - (dt / this.dd) * (fh[1] - fl[1] + gh[1] - gl[1]),
-							this.U(i,j)[2] - (dt / this.dd) * (fh[2] - fl[2] + gh[2] - gl[2])];
-				console.log("stepping. new n val:",new_U_xy[0]);
+
+				new_U_xy = [this.U(i,j)[0] - dtdd * (fh[0] - fl[0] + gh[0] - gl[0]),
+							this.U(i,j)[1] - dtdd * (fh[1] - fl[1] + gh[1] - gl[1]),
+							this.U(i,j)[2] - dtdd * (fh[2] - fl[2] + gh[2] - gl[2])];
 				this.new_n[i][j] = new_U_xy[0];
 				this.new_u[i][j] = new_U_xy[1] / new_U_xy[0];
 				this.new_v[i][j] = new_U_xy[2] / new_U_xy[0];
+
+				if (!isFinite((this.new_n[i][j]))) {
+					console.log("bad new guy!!");
+					console.trace();
+					return;
+				}
 			}
 		}
 		this.n = this.new_n;
@@ -129,22 +150,30 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g, omega) {
 	// drip a drop height z at 0 < i,j < QUANT
 	// guess it could be negative if you're really feelin it
 	this.plip = function(i,j) {
-		console.log("plip",i,j);
+		// console.log("plip",i,j);
 		var drop = function(x, y) {
-			return 5 * Math.exp(-5*((x - i)^2 + (y - j)^2));
-		}
+			// console.log("drop coords",(x-i),(y-j));
+			return 30*((x - i) * (x - i) + (y - j) * (y - j));
+		};
+		var d;
 		for (var p = 0; p < this.QUANT; p++) {
 			for (var q = 0; q < this.QUANT; q++) {
-				this.n[p][q] += drop(p,q);
+				// console.log("dropping",drop(p,q),"at",p,q);
+				d = drop(p,q);
+				// console.log("old guy is",this.n[p][q],"adding",d);
+				this.n[p][q] = this.n[p][q] + d;
+				// console.log("new guy is",this.n[p][q]);
 			}
 		}
+		return true; // for synchrony
 	};
 
 };
 
 /* ********************************************************************************* */
+/* visualization using canvas & simple colors                                        */
 function CanvasBathtub($ctnr) {
-	var Q = 100;
+	var Q = 500;
 
 	this.width = 500;
 	this.height = 500;
@@ -155,8 +184,8 @@ function CanvasBathtub($ctnr) {
 	$ctnr.append($(this.canvas));
 	this.context = this.canvas.getContext("2d");
 	this.context.imageSmoothingEnabled= false;
-	this.id;
-	var system = new SWE(Q, 500);
+	this.id = undefined;
+	var system = new SWE(Q, this.width);
 	console.log(system);
 	var self = this;
 
@@ -167,33 +196,45 @@ function CanvasBathtub($ctnr) {
 	$(this.canvas).click(function(e) {
 		var x = Math.floor((e.pageX-$(self.canvas).offset().left) / system.dd);
     	var y = Math.floor((e.pageY-$(self.canvas).offset().top) / system.dd);
+    	// pause and drip a plip at x,y
     	self.cleanup();
-    	system.plip(x,y);
-    	self.loop();
+    	if (system.plip(x,y))
+    		self.loop();
 	});
-	var count = 0;
-	var animate = function() {
-		console.log("ANIMATE FOR THE",count++,"TH TIME!");
+
+	this.animate = function() {
+		console.log("ANIMATE DA FRAME",self.id);
 		console.log(system);
+
+		// render to canvas
 		var b, c;
 		for (var i = 0; i < Q; i++) {
 			for (var j = 0; j < Q; j++) {
-				b = (Math.floor(system.n[i][j]) % 255).toString(16);
-				c = "#ffff" + ((b.length < 2) ? ("0" + b) : (b));
-				console.log("n-val",system.n[i][j],"produces color",c);
+				if (isNaN((system.n[i][j]))) {
+					console.log("bad!");
+					console.trace();
+					return;
+				}
+				b = (255 - Math.floor(system.n[i][j]) % 255).toString(16);
+				c = "#" + ((b.length < 2) ? ("0" + b) : (b)) + ((b.length < 2) ? ("0" + b) : (b)) + "ff";
+				// console.log("n-val",system.n[i][j],"produces color",c);
 				self.context.fillStyle = c;
-				self.context.fillRect(system.dd,system.dd,system.dd*i,system.dd*j);
+				self.context.fillRect(system.dd*i,system.dd*j,system.dd,system.dd);
 			}
 		}
+
+		// timing for numerical step
 		now = Date.now();
 		system.step(now - then);
 		then = now;
+
+		self.id = requestAnimationFrame(self.animate);
 	};
 	this.loop = function() {
-		this.id = setInterval(animate, 5000);
+		this.id = requestAnimationFrame(self.animate, self.canvas);
 	};
 	this.cleanup = function() {
-		clearInterval(this.id);
+		cancelAnimationFrame(self.id);
 	};
 };
 
