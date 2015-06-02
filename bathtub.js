@@ -27,145 +27,234 @@
 // we want U_n+1. won't write out the method, but it's implemented below.
 
 /* ********************************************************************************* */
-// class ShallowWater: interactive numerical shallow water system
+// class SWE: interactive numerical shallow water system
 // takes parameters above.
-// reflective BCs: u = 0 at y = 0,QUANT
-//				   v = 0 at x = 0,QUANT
+// reflective BCs: u = 0 at y = 0 or QUANT-1
+//				   v = 0 at x = 0 or QUANT-1
 // so our parameters are then:
 //		QUANT		-	we're doing numerics. so we need a number of discrete points
 //				    	to sample. our following parameters (except H) will thus be
 //						QUANTxQUANT arrays.
 //		LENGTH		-   the physical side length of the bathtub
-// 		n_o			-	QUANTxQUANT float array. initial value for column height.
+// 		n_o			-	QUANTxQUANT array. initial value for column height.
 //		u_o, v_o	-	same. IV for velocity. must conform to reflective BCs above.
 function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 	this.QUANT = QUANT || 100;
 	this.LENGTH = LENGTH || 10;
 	this.dd = this.LENGTH / this.QUANT;
 	// if n_o is not supplied, let's make a barely filled bathtub.
-	this.n;
 	if (n_o == undefined) {
 		console.log("create n");
-		this.n = [];
+		n_o = [];
 		for (var _i = 0; _i < QUANT; _i++) {
-			this.n.push([]);
+			n_o.push([]);
 			for (var _j = 0; _j < QUANT; _j++) {
-				this.n[_i].push(1);
+				n_o[_i].push(1);
 			}
 		}
-	} else {
-		this.n = n_o;
 	}
-	this.u = u_o || this.n.map(function(a) { return a.map(function() { return 0; }) }); // backup is a correct-sized
-	this.v = v_o || this.n.map(function(a) { return a.map(function() { return 0; }) }); // array of zeros
+	if (u_o == undefined)
+		u_o = n_o.map(function(a) { return a.map(function() { return 0; }) }); // backup is a correct-sized
+	if (v_o == undefined)
+		v_o = n_o.map(function(a) { return a.map(function() { return 0; }) }); // array of zeros
+	// hold current state
+	this.U = [];
+	var h;
+	for (var _ii = 0; _ii < QUANT; _ii++) {
+		this.U.push([]);
+		for (var _jj = 0; _jj < QUANT; _jj++) {
+			h = n_o[_ii][_jj];
+			this.U[_ii].push([h,
+							  h * u_o[_ii][_jj],
+							  h * v_o[_ii][_jj]]);
+		}
+	}
 	this.g = g || -9.807; // meters per second^2
-	this.H = 1; // calculate the average water height in the IC
-
-	// System
-	this.U = function(x, y) {
-		if (x < 0) x = 0;
-		if (y < 0) y = 0;
-		if (x >= this.QUANT) x = this.QUANT - 1;
-		if (y >= this.QUANT) y = this.QUANT - 1;
-		return [this.n[x][y], 
-				this.n[x][y] * this.u[x][y], 
-				this.n[x][y] * this.v[x][y]];
+	this.H = 1; // average water height
+	// send current state
+	this.heightAt = function(x,y) {
+		return this.U[x][y][0];
 	};
+	// System
 	this.F = function(U_xy) {
-		return [U_xy[0] * U_xy[1], 
-				U_xy[0] * U_xy[1] * U_xy[1] + this.g * U_xy[0] * U_xy[0] / 2,
-				U_xy[0] * U_xy[1] * U_xy[2]];
+		var _hf = U_xy[0];
+		var _uf = U_xy[1] / _hf;
+		return [(U_xy[1]), 
+				(U_xy[1] * _uf + this.g * _hf * _hf * 0.5),
+				( U_xy[2] * _uf)];
 	};
 	this.G = function(U_xy) {
-		return [U_xy[0] * U_xy[2],
-				U_xy[0] * U_xy[1] * U_xy[2],
-				U_xy[0] * U_xy[2] * U_xy[2] + this.g * U_xy[0] * U_xy[0] / 2];
+		var _hg = U_xy[0];
+		var _vg = U_xy[2] / _hg;
+		return [(U_xy[2]),
+				(U_xy[1] * _vg),
+				(U_xy[2] * _vg + this.g * _hg * _hg * 0.5)];
 	};
 	// step function helpers
-	this.U_half_h = function(i_lo, i_hi, j, dt) {
-		var uhi = this.U(i_hi, j);
-		var ulo = this.U(i_lo, j);
-		var fhi = this.F(uhi);
-		var flo = this.F(ulo);
-		return [(uhi[0] + ulo[0]) * 0.5
-				- (dt / (2 * this.dd)) * (fhi[0] - flo[0]),
-				(uhi[1] + ulo[1]) * 0.5
-				- (dt / (2 * this.dd)) * (fhi[1] - flo[1]),
-				(uhi[2] + ulo[2]) * 0.5
-				- (dt / (2 * this.dd)) * (fhi[2] - flo[2])];
-	};
-	this.U_half_v = function(i, j_lopez, j_hi, dt) {
-		var uhi = this.U(i, j_hi);
-		var ulo = this.U(i, j_lopez);
-		var ghi = this.G(uhi);
-		var glo = this.G(ulo);
-		return [(uhi[0] + ulo[0]) * 0.5
-				- (dt / (2 * this.dd)) * (ghi[0] - glo[0]),
-				(uhi[1] + ulo[1]) * 0.5
-				- (dt / (2 * this.dd)) * (ghi[1] - glo[1]),
-				(uhi[2] + ulo[2]) * 0.5
-				- (dt / (2 * this.dd)) * (ghi[2] - glo[2])];
-	};
-	// numerically step the system by time-diff dt
+	function addthree(a,b) {
+		return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+	}
+	function subthree(a,b) {
+		return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+	}
+	function scalethree(a,vec) {
+		return [a*vec[0],a*vec[1],a*vec[2]];
+	}
+	// numerically step the system by time-diff dt (seconds)
 	// use Lax-Wendroff scheme above
+	// this is a meaty method yall! now coming at you in ass-polynomial time.
 	this.step = function(dt) {
-		this.new_n = this.n;
-		this.new_u = this.u;
-		this.new_v = this.v;
-		var uhhlo, uhhhi, uhvlo, uhvhi, new_U_xy;
-		var fh, fl, gh, gl;
-		var dtdd = dt / this.dd;
-		for (var i = 0; i < this.QUANT; i++) {
-			for (var j = 0; j < this.QUANT; j++) { // now in ass-polynomial time
-				uhhlo = this.U_half_h(i - 1, i, j, dt);
-				uhhhi = this.U_half_h(i, i + 1, j, dt);
-				uhvlo = this.U_half_v(i, j - 1, j, dt);
-				uhvhi = this.U_half_v(i, j, j + 1, dt);
+		// have U^{n}_{i,j} of size QxQ stored in this.U
+		// that gives values here:
+		// |===|
+		// | x |
+		// |===|
+		// remember BCs: u = 0 at y = 0 or QUANT-1
+		//				 v = 0 at x = 0 or QUANT-1
 
-				fh = this.F(uhhhi);
-				fl = this.F(uhhlo);
-				gh = this.G(uhvhi);
-				gl = this.G(uhvlo);
 
-				new_U_xy = [this.U(i,j)[0] - dtdd * (fh[0] - fl[0] + gh[0] - gl[0]),
-							this.U(i,j)[1] - dtdd * (fh[1] - fl[1] + gh[1] - gl[1]),
-							this.U(i,j)[2] - dtdd * (fh[2] - fl[2] + gh[2] - gl[2])];
-				this.new_n[i][j] = new_U_xy[0];
-				this.new_u[i][j] = new_U_xy[1] / new_U_xy[0];
-				this.new_v[i][j] = new_U_xy[2] / new_U_xy[0];
-
-				if (!isFinite((this.new_n[i][j]))) {
-					console.log("bad new guy!!");
-					console.trace();
-					return;
+		/*******************/
+		/* STEP 1 Lax shiz */
+		/*******************/
+		var step_factor = dt * 0.5 / this.dd;
+		// this will be U^{n+.5}_{i+.5,j} of size Q+1xQ - the horizontal midpoints
+		// can see the size change cuz it gives values here:
+		// |===|
+		// x   x
+		// |===|
+		// careful with cases outside of U's dims:
+		// ih = 0 (i = -.5 in U coords) and
+		// ih = Q (i = Q - .5 in U coords)
+		// handle these by substituting U values for i = 0 and i = Q - 1
+		// also make sure 3rd component is 0 at these points
+		// for vertical edges, make sure U^{n+.5}_{i+.5,0} and U^{n+.5}_{i+.5,Q-1}
+		// have second component equal to zero.
+		var U_lax_horizontal = [];
+		var uhlo, uhhi; // store points to be interpolated
+		for (var ih = 0; ih < this.QUANT + 1; ih++) {
+			// ih is i + 1/2 in original coords
+			U_lax_horizontal.push([]);
+			for (var jh = 0; jh < this.QUANT; jh++) {
+				// jh is j in original coords
+				// interpolate U[ih - 1][jh] and U[ih][jh]
+				
+				// edge cases:
+				if (ih == 0) {
+					uhlo = this.U[ih][jh];
+					uhhi = uhlo;
+				} else if (ih == this.QUANT) {
+					uhlo = this.U[ih - 1][jh];
+					uhhi = uhlo;
+				} else {
+					uhlo = this.U[ih - 1][jh];
+					uhhi = this.U[ih][jh];
+				}
+				// Lax interpolate
+				U_lax_horizontal[ih][jh] = subthree(scalethree(0.5, addthree(uhhi, uhlo)),
+					                                scalethree(step_factor,
+					                                	       subthree(this.F(uhhi), this.F(uhlo))));
+				// BCs. do we need this? who can say
+				if (ih == 0 || ih == this.QUANT) {
+					U_lax_horizontal[ih][jh][2] = 0;
+				}
+				if (jh == 0 || jh == this.QUANT - 1) {
+					U_lax_horizontal[ih][jh][1] = 0;
 				}
 			}
 		}
-		this.n = this.new_n;
-		this.u = this.new_u;
-		this.v = this.new_v;
+
+		// this will be U^{n+.5}_{i,j+.5} of size QxQ+1 - the vertical midpoints
+		// size change cuz it gives values here:
+		// |=x=|
+		// |   |
+		// |=x=|
+		// careful with edge cases:
+		// jv = 0 (j = -1/2 in this.U coords) and
+		// jv = Q+1 (j = Q + .5 in U coords)
+		var U_lax_vertical = [];
+		var uvlo, uvhi; // store points to be interpolated
+		for (var iv = 0; iv < this.QUANT; iv++) {
+			// iv is i in original coords
+			U_lax_vertical.push([]);
+			for (var jv = 0; jv < this.QUANT + 1; jv++) {
+				// jv is j + 1/2 in original coords
+				
+				// edges:
+				if (jv == 0) {
+					uvhi = this.U[iv][jv];
+					uvlo = uvhi;
+				} else if (jv == this.QUANT) {
+					uvlo = this.U[iv][jv - 1];
+					uvhi = uvlo;
+				} else {
+					uvlo = this.U[iv][jv - 1];
+					uvhi = this.U[iv][jv];
+				}
+				// Lax interpolate
+				U_lax_vertical[iv][jv] = subthree((scalethree(0.5, addthree(uvhi, uvlo))),
+												   scalethree(step_factor,
+												   	          subthree(this.G(uvhi), this.G(uvlo))));
+				// BCs. do we need this? who can say
+				if (iv == 0 || iv == this.QUANT - 1) {
+					U_lax_vertical[iv][jv][2] = 0;
+				}
+				if (jv == 0 || jv == this.QUANT) {
+					U_lax_vertical[iv][jv][1] = 0;
+				}
+			}
+		}
+
+		/*****************/
+		/* Step 2 U_next */
+		/*****************/
+		// we're now generating U^{n+1}_{i,j} QxQ, the new value of U
+		var next_factor = step_factor * 2;
+		var U_next = [];
+		for (var i = 0; i < this.QUANT; i++) {
+			U_next.push([]);
+			for (var j = 0; j < this.QUANT; j++) {
+				// going to work with:
+				// U^{n+.5}_{i+.5,j} and U^{n+.5}_{i-.5,j}
+				//		find with [i+1][j] and [i][j], respectively
+				// U^{n+.5}_{i,j+.5} and U^{n+.5}_{i,j-.5}
+				//		find with [i][j+j1] and [i][j], respectively
+
+				// functional programming has ruined me, dear readers
+				U_next[i].push(subthree(this.U[i][j],
+										scalethree(next_factor,
+											       addthree(subthree(this.F(U_lax_horizontal[i+1][j]),
+											       	                 this.F(U_lax_horizontal[i][j])),
+											       	        subthree(this.G(U_lax_vertical[i][j+1]),
+											       	        	     this.G(U_lax_vertical[i][j]))))));
+			}
+		}
+		this.U = U_next; // ay
+		return true;
 	};
 
+	// plip helpers
+	this.addtoU = function(a,i,j) {
+		// got to break it down
+		this.U[i][j][1] = this.U[i][j][1] / this.U[i][j][0];
+		this.U[i][j][2] = this.U[i][j][2] / this.U[i][j][0];
+		this.U[i][j][0] += a;
+		this.U[i][j][1] *= this.U[i][j][0];
+		this.U[i][j][2] *= this.U[i][j][0];
+	};
+	var drop = function(x, y, i, j) {
+		return 5 * Math.exp(-((x - i) * (x - i) + (y - j) * (y - j)));
+	};
 	// it would be boring if we couldn't interact with this thing.
-	// drip a drop height z at 0 < i,j < QUANT
-	// guess it could be negative if you're really feelin it
+	// drip a drop at 0 < i,j < QUANT
 	this.plip = function(i,j) {
-		// console.log("plip",i,j);
-		var drop = function(x, y) {
-			// console.log("drop coords",(x-i),(y-j));
-			return 30*((x - i) * (x - i) + (y - j) * (y - j));
-		};
 		var d;
 		for (var p = 0; p < this.QUANT; p++) {
 			for (var q = 0; q < this.QUANT; q++) {
-				// console.log("dropping",drop(p,q),"at",p,q);
-				d = drop(p,q);
-				// console.log("old guy is",this.n[p][q],"adding",d);
-				this.n[p][q] = this.n[p][q] + d;
-				// console.log("new guy is",this.n[p][q]);
+				d = drop(p,q,i,j);
+				this.addtoU(d,p,q);
 			}
 		}
-		return true; // for synchrony
+		return true;
 	};
 
 };
@@ -173,10 +262,10 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 /* ********************************************************************************* */
 /* visualization using canvas & simple colors                                        */
 function CanvasBathtub($ctnr) {
-	var Q = 500;
+	var Q = 100;
 
-	this.width = 500;
-	this.height = 500;
+	this.width = 495;
+	this.height = 495;
 	this.canvas = document.createElement("canvas");
 	this.canvas.setAttribute("id", "conway");
 	this.canvas.setAttribute("width", this.width);
@@ -194,30 +283,32 @@ function CanvasBathtub($ctnr) {
 	var dt;
 
 	$(this.canvas).click(function(e) {
-		var x = Math.floor((e.pageX-$(self.canvas).offset().left) / system.dd);
-    	var y = Math.floor((e.pageY-$(self.canvas).offset().top) / system.dd);
+		var x = Math.floor(Math.floor((e.pageX-$(self.canvas).offset().left)) / system.dd);
+    	var y = Math.floor(Math.floor((e.pageY-$(self.canvas).offset().top)) / system.dd);
     	// pause and drip a plip at x,y
     	self.cleanup();
-    	if (system.plip(x,y))
+    	self.cleanup();
+    	if (system.plip(x,y)) {
+    		then = Date.now();
     		self.loop();
+    	}
 	});
 
 	this.animate = function() {
 		console.log("ANIMATE DA FRAME",self.id);
-		console.log(system);
+		// console.log(system);
 
 		// render to canvas
 		var b, c;
 		for (var i = 0; i < Q; i++) {
 			for (var j = 0; j < Q; j++) {
-				if (isNaN((system.n[i][j]))) {
+				if (isNaN(system.heightAt(i,j))) {
 					console.log("bad!");
 					console.trace();
 					return;
 				}
-				b = (255 - Math.floor(system.n[i][j]) % 255).toString(16);
+				b = (255 - Math.floor(system.heightAt(i,j) % 255)).toString(16);
 				c = "#" + ((b.length < 2) ? ("0" + b) : (b)) + ((b.length < 2) ? ("0" + b) : (b)) + "ff";
-				// console.log("n-val",system.n[i][j],"produces color",c);
 				self.context.fillStyle = c;
 				self.context.fillRect(system.dd*i,system.dd*j,system.dd,system.dd);
 			}
@@ -225,10 +316,10 @@ function CanvasBathtub($ctnr) {
 
 		// timing for numerical step
 		now = Date.now();
-		system.step(now - then);
-		then = now;
-
-		self.id = requestAnimationFrame(self.animate);
+		if (system.step((now - then) / 1000)) {
+			then = now;
+			self.id = requestAnimationFrame(self.animate);
+		}
 	};
 	this.loop = function() {
 		this.id = requestAnimationFrame(self.animate, self.canvas);
