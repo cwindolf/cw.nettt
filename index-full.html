@@ -102,16 +102,17 @@ function ruleWindow() {
 };
 
 function bathtubWindow() {
-	var bw = new Window("Bathtub", "", true, 500, 500);
+	var bw = new Window("Slo-Mo Bathtub", "", true, 657, 676);
 	bw.display($("body"), "20%", "20%");
 	var $ctnr = $(".dragme[data-window-id='" + bw.id + "'] .content");
 	var btub = new CanvasBathtub($ctnr);
+	bw.desc("Clicks drip drops. Unstable so numbers blow up.");
 	bw.onClose = btub.cleanup;
 	btub.loop();
 };
 
 var menu = new Window ("Charlie Windolf's Home Page", 
-	"This is my website. Welcome to it! I made it for you <33<hr><b>Things to do here:</b><br><ul id='menu' class='center'><li id='b'>Bathtub</li><li id='c'>Conway</li><li id='e'>Explorer <b>WIP</b></li><li id='p'>Pond</li><li id='r'>Rule 110</li></ul><hr><div class='center'><a href='https://github.com/cwindolf/cw.nettt'>Source</a></div>",
+	"This is my website. Welcome to it! I made it for you <33<hr><b>Things to do here:</b><br><ul id='menu' class='center'><li id='b'>Slo-Mo Bathtub</li><li id='c'>Conway</li><li id='e'>Explorer <b>WIP</b></li><li id='p'>Pond</li><li id='r'>Rule 110</li></ul><hr><div class='center'><a href='https://github.com/cwindolf/cw.nettt'>Source</a></div>",
 	false,
 	"300px", "");
 menu.display($("body"), "5%", "5%");

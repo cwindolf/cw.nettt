@@ -4,7 +4,7 @@
 //			(u,v)	-	fluid horizontal velocity at x,y,t
 //			g		-	acceleration due to gravity
 //			H 		- 	mean water height
-// let's write the equations down:
+// if we write:
 // if 		   	{  n  }
 //		U  := 	{ n*u }
 //			   	{ n*v }
@@ -16,7 +16,7 @@
 //				{ n*v }
 //		G(U) := { n*u*v}
 //				{ n*v^2 + g*n^2 / 2 }
-// then we can write the system as:
+// then the system is:
 //
 //		dU     dF(U)     dG(U)     _
 //		--  +  -----  +  -----  =  0
@@ -42,6 +42,7 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 	this.QUANT = QUANT || 100;
 	this.LENGTH = LENGTH || 10;
 	this.dd = this.LENGTH / this.QUANT;
+	this.delegate; // will call updateHeightAt(x,y,height) on delegate whenever a height changes;
 	// if n_o is not supplied, let's make a barely filled bathtub.
 	if (n_o == undefined) {
 		console.log("create n");
@@ -49,14 +50,14 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 		for (var _i = 0; _i < QUANT; _i++) {
 			n_o.push([]);
 			for (var _j = 0; _j < QUANT; _j++) {
-				n_o[_i].push(1);
+				n_o[_i].push(20.0);
 			}
 		}
 	}
 	if (u_o == undefined)
-		u_o = n_o.map(function(a) { return a.map(function() { return 0; }) }); // backup is a correct-sized
+		u_o = n_o.map(function(a) { return a.map(function() { return 0.0; }) }); // backup is a correct-sized
 	if (v_o == undefined)
-		v_o = n_o.map(function(a) { return a.map(function() { return 0; }) }); // array of zeros
+		v_o = n_o.map(function(a) { return a.map(function() { return 0.0; }) }); // array of zeros
 	// hold current state
 	this.U = [];
 	var h;
@@ -65,12 +66,11 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 		for (var _jj = 0; _jj < QUANT; _jj++) {
 			h = n_o[_ii][_jj];
 			this.U[_ii].push([h,
-							  h * u_o[_ii][_jj],
-							  h * v_o[_ii][_jj]]);
+				h * u_o[_ii][_jj],
+				h * v_o[_ii][_jj]]);
 		}
 	}
-	this.g = g || -9.807; // meters per second^2
-	this.H = 1; // average water height
+	this.g = g || 10; // meters per second^2
 	// send current state
 	this.heightAt = function(x,y) {
 		return this.U[x][y][0];
@@ -80,15 +80,15 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 		var _hf = U_xy[0];
 		var _uf = U_xy[1] / _hf;
 		return [(U_xy[1]), 
-				(U_xy[1] * _uf + this.g * _hf * _hf * 0.5),
-				( U_xy[2] * _uf)];
+		(U_xy[1] * _uf + this.g * _hf * _hf * 0.5),
+		( U_xy[2] * _uf)];
 	};
 	this.G = function(U_xy) {
 		var _hg = U_xy[0];
 		var _vg = U_xy[2] / _hg;
 		return [(U_xy[2]),
-				(U_xy[1] * _vg),
-				(U_xy[2] * _vg + this.g * _hg * _hg * 0.5)];
+		(U_xy[1] * _vg),
+		(U_xy[2] * _vg + this.g * _hg * _hg * 0.5)];
 	};
 	// step function helpers
 	function addthree(a,b) {
@@ -103,6 +103,7 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 	// numerically step the system by time-diff dt (seconds)
 	// use Lax-Wendroff scheme above
 	// this is a meaty method yall! now coming at you in ass-polynomial time.
+	// whence the NaNs??
 	this.step = function(dt) {
 		// have U^{n}_{i,j} of size QxQ stored in this.U
 		// that gives values here:
@@ -151,15 +152,8 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 				}
 				// Lax interpolate
 				U_lax_horizontal[ih][jh] = subthree(scalethree(0.5, addthree(uhhi, uhlo)),
-					                                scalethree(step_factor,
-					                                	       subthree(this.F(uhhi), this.F(uhlo))));
-				// BCs. do we need this? who can say
-				if (ih == 0 || ih == this.QUANT) {
-					U_lax_horizontal[ih][jh][2] = 0;
-				}
-				if (jh == 0 || jh == this.QUANT - 1) {
-					U_lax_horizontal[ih][jh][1] = 0;
-				}
+					scalethree(step_factor,
+						subthree(this.F(uhhi), this.F(uhlo))));
 			}
 		}
 
@@ -192,15 +186,8 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 				}
 				// Lax interpolate
 				U_lax_vertical[iv][jv] = subthree((scalethree(0.5, addthree(uvhi, uvlo))),
-												   scalethree(step_factor,
-												   	          subthree(this.G(uvhi), this.G(uvlo))));
-				// BCs. do we need this? who can say
-				if (iv == 0 || iv == this.QUANT - 1) {
-					U_lax_vertical[iv][jv][2] = 0;
-				}
-				if (jv == 0 || jv == this.QUANT) {
-					U_lax_vertical[iv][jv][1] = 0;
-				}
+					scalethree(step_factor,
+						subthree(this.G(uvhi), this.G(uvlo))));
 			}
 		}
 
@@ -221,11 +208,13 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 
 				// functional programming has ruined me, dear readers
 				U_next[i].push(subthree(this.U[i][j],
-										scalethree(next_factor,
-											       addthree(subthree(this.F(U_lax_horizontal[i+1][j]),
-											       	                 this.F(U_lax_horizontal[i][j])),
-											       	        subthree(this.G(U_lax_vertical[i][j+1]),
-											       	        	     this.G(U_lax_vertical[i][j]))))));
+					scalethree(next_factor,
+						addthree(subthree(this.F(U_lax_horizontal[i+1][j]),
+							this.F(U_lax_horizontal[i][j])),
+						subthree(this.G(U_lax_vertical[i][j+1]),
+							this.G(U_lax_vertical[i][j]))))));
+				if (this.delegate && U_next[i][j][0] != this.U[i][j][0])
+					this.delegate.updateHeightAt(i,j,U_next[i][j][0]);
 			}
 		}
 		this.U = U_next; // ay
@@ -240,13 +229,17 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 		this.U[i][j][0] += a;
 		this.U[i][j][1] *= this.U[i][j][0];
 		this.U[i][j][2] *= this.U[i][j][0];
+		for (var p = 0; p < 3; p++) {
+			console.assert(isFinite(this.U[i][j][p]));
+		}
 	};
 	var drop = function(x, y, i, j) {
-		return 5 * Math.exp(-((x - i) * (x - i) + (y - j) * (y - j)));
+		return 100 * Math.exp(-0.008 * ((x - i) * (x - i) + (y - j) * (y - j)));
 	};
 	// it would be boring if we couldn't interact with this thing.
 	// drip a drop at 0 < i,j < QUANT
 	this.plip = function(i,j) {
+		console.log("PLIP",i,j);
 		var d;
 		for (var p = 0; p < this.QUANT; p++) {
 			for (var q = 0; q < this.QUANT; q++) {
@@ -257,22 +250,26 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 		return true;
 	};
 
+	this.randomize = function() {
+		this.U = this.U.map(function (a) { return a.map(function(b) { return b.map(function() { return Math.random() * 40; })})});
+	}
+
 };
 
 /* ********************************************************************************* */
 /* visualization using canvas & simple colors                                        */
 function CanvasBathtub($ctnr) {
-	var Q = 100;
+	var Q = 250;
 
-	this.width = 495;
-	this.height = 495;
+	this.width = 650;
+	this.height = 650;
 	this.canvas = document.createElement("canvas");
 	this.canvas.setAttribute("id", "conway");
 	this.canvas.setAttribute("width", this.width);
 	this.canvas.setAttribute("height", this.height);
 	$ctnr.append($(this.canvas));
 	this.context = this.canvas.getContext("2d");
-	this.context.imageSmoothingEnabled= false;
+	this.context.imageSmoothingEnabled = false;
 	this.id = undefined;
 	var system = new SWE(Q, this.width);
 	console.log(system);
@@ -282,51 +279,60 @@ function CanvasBathtub($ctnr) {
 	var now;
 	var dt;
 
+	// play sounds
+	window.AudioContext = window.AudioContext||window.webkitAudioContext;
+    this.acontext = new AudioContext();
+
 	$(this.canvas).click(function(e) {
-		var x = Math.floor(Math.floor((e.pageX-$(self.canvas).offset().left)) / system.dd);
-    	var y = Math.floor(Math.floor((e.pageY-$(self.canvas).offset().top)) / system.dd);
+		var x = Math.floor(Math.floor((e.pageX-$(self.canvas).offset().left)) / (system.dd));
+		var y = Math.floor(Math.floor((e.pageY-$(self.canvas).offset().top)) / (system.dd));
     	// pause and drip a plip at x,y
-    	self.cleanup();
-    	self.cleanup();
-    	if (system.plip(x,y)) {
-    		then = Date.now();
-    		self.loop();
-    	}
-	});
+    	clearInterval(this.id);
+    	system.plip(x,y);
+    	then = Date.now() - 1;
+    	self.loop();
+    });
 
-	this.animate = function() {
-		console.log("ANIMATE DA FRAME",self.id);
-		// console.log(system);
-
-		// render to canvas
-		var b, c;
-		for (var i = 0; i < Q; i++) {
-			for (var j = 0; j < Q; j++) {
-				if (isNaN(system.heightAt(i,j))) {
-					console.log("bad!");
-					console.trace();
-					return;
-				}
-				b = (255 - Math.floor(system.heightAt(i,j) % 255)).toString(16);
-				c = "#" + ((b.length < 2) ? ("0" + b) : (b)) + ((b.length < 2) ? ("0" + b) : (b)) + "ff";
-				self.context.fillStyle = c;
-				self.context.fillRect(system.dd*i,system.dd*j,system.dd,system.dd);
+	// update to current tub.
+	this.update = function() {
+		console.log("refresh!");
+		var height;
+		for (var x = 0; x < Q; x++) {
+			for (var y = 0; y < Q; y++) {
+				height = system.heightAt(x,y);
+				var col = (255 - (Math.round(height) % 256));
+				this.context.fillStyle = "rgb("+ col + ","+ col +",255)";
+				this.context.fillRect(system.dd * x, system.dd * y, system.dd, system.dd);
 			}
 		}
+	};
 
-		// timing for numerical step
-		now = Date.now();
-		if (system.step((now - then) / 1000)) {
-			then = now;
-			self.id = requestAnimationFrame(self.animate);
+	// be a bathtub delegate
+	system.delegate = this;
+	this.updateHeightAt = function(x,y,height) {
+		var o = 
+		console.assert(isFinite(height));
+		var col = (255 - (Math.round(height) % 256));
+		this.context.fillStyle = "rgb("+ col + ","+ col +",255)";
+		if (!isFinite(height)) {
+			console.log("bimmer at",x,y,height);
+			console.log("color was",this.context.fillStyle);
+			this.context.fillStyle = "#000";
 		}
+		this.context.fillRect(system.dd * x, system.dd * y, system.dd, system.dd);
 	};
+
 	this.loop = function() {
-		this.id = requestAnimationFrame(self.animate, self.canvas);
+		this.id = setInterval(function() {
+			now = Date.now();
+			dt = now - then;
+			system.step(dt / 20000);
+			then = now;
+		}, 1); // fast as possible i guess. system is more stable with lower dt values.
 	};
-	this.cleanup = function() {
-		cancelAnimationFrame(self.id);
-	};
+
+	this.cleanup = function() { clearInterval(this.id); };
+	this.update();
 };
 
 

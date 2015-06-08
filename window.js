@@ -56,6 +56,10 @@ function Window (title, content, close, width, height) {
 		b.click(action);
 	};
 
+	this.desc = function(text) {
+		$(".dragme[data-window-id='" + this.id + "'] .handle").append("<span class='desc'>" + text + "</span>");
+	};
+
 	this.jqObj = function() {
 		return $(".dragme[data-window-id='" + this.id + "']");
 	};

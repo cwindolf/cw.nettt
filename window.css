@@ -55,6 +55,14 @@ b {
 .dragme .handle .button {
 	font-size: 1em;
 	font-weight: normal;
+	font-style: italic;
+	margin-left: 1em;
+	cursor: default;
+}
+
+.dragme .handle .desc {
+	font-size: 1em;
+	font-weight: normal;
 	margin-left: 1em;
 	cursor: pointer;
 }
