@@ -106,7 +106,7 @@ function bathtubWindow() {
 	bw.display($("body"), "20%", "20%");
 	var $ctnr = $(".dragme[data-window-id='" + bw.id + "'] .content");
 	var btub = new CanvasBathtub($ctnr);
-	bw.desc("Clicks drip drops. Unstable so numbers blow up.");
+	bw.desc("Clicks drip drops. Unstable so numbers blow up (black).");
 	bw.onClose = btub.cleanup;
 	btub.loop();
 };
