@@ -261,8 +261,8 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 function CanvasBathtub($ctnr) {
 	var Q = 250;
 
-	this.width = 650;
-	this.height = 650;
+	this.width = 750;
+	this.height = 750;
 	this.canvas = document.createElement("canvas");
 	this.canvas.setAttribute("id", "conway");
 	this.canvas.setAttribute("width", this.width);
