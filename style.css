@@ -30,7 +30,6 @@
 	border-bottom: 1px dashed black;
 	width: 4em;
 	height: 4em;
-	background:;
 }
 
 #point {
@@ -38,4 +37,22 @@
 	height: 1px;
 	position: relative;
 	background-color: black;
+}
+
+#fourgan ul {
+	display: inline-block;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 100px;
+	padding-right: 100px;
+	margin-bottom: 100px;
+}
+
+#fourgan ul li {
+	display: inline;
+}
+
+#fourgan input[type="range"] {
+	margin-right: -100px;
+    -webkit-transform: rotate(270deg);
 }

@@ -51,13 +51,13 @@ function Window (title, content, close, width, height) {
 	};
 
 	this.button = function(text, action) {
-		$(".dragme[data-window-id='" + this.id + "'] .handle").append("<span class='button'>" + text + "</span>");
+		$(".dragme[data-window-id='" + this.id + "'] .handle").append("<span class='button noselect'>" + text + "</span>");
 		var b = $(".dragme[data-window-id='" + this.id + "'] .handle").children(".button").last();
 		b.click(action);
 	};
 
 	this.desc = function(text) {
-		$(".dragme[data-window-id='" + this.id + "'] .handle").append("<span class='desc'>" + text + "</span>");
+		$(".dragme[data-window-id='" + this.id + "'] .handle").append("<span class='desc noselect'>" + text + "</span>");
 	};
 
 	this.jqObj = function() {

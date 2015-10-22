@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
+	<style>
+
+	</style>
+
+
+	<script src="./paper-full.min.js"></script>
+	<script type="text/paperscript" data-paper-canvas="myCanvas">
+	console.log("hey");
+	var circle = new Path.Circle(new Point(100,100), 50);
+	circle.fillColor = 'black';
+
+	function onMouseMove(event) {
+		console.log("Move");
+		console.log(event)
+		var step = event.step;
+		circle.position = event.point;
+	};
+
+	function onResize(event) {
+		//setViewSize(window.innerWidth, window.innerHeight;
+	};
+	</script>
+
+</head>
+<body>
+	<canvas id="myCanvas" data-paper-resize="true"></canvas>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

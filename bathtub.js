@@ -326,7 +326,7 @@ function CanvasBathtub($ctnr) {
 		this.id = setInterval(function() {
 			now = Date.now();
 			dt = now - then;
-			system.step(dt / 20000);
+			system.step(dt / 10000);
 			then = now;
 		}, 1); // fast as possible i guess. system is more stable with lower dt values.
 	};
