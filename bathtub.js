@@ -259,7 +259,7 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 /* ********************************************************************************* */
 /* visualization using canvas & simple colors                                        */
 function CanvasBathtub($ctnr) {
-	var Q = 250;
+	var Q = 200;
 
 	this.width = 500;
 	this.height = 500;
