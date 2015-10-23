@@ -331,7 +331,10 @@ function CanvasBathtub($ctnr) {
 		}, 1); // fast as possible i guess. system is more stable with lower dt values.
 	};
 
-	this.cleanup = function() { clearInterval(this.id); };
+	this.cleanup = function() { 
+		clearInterval(self.id);
+
+	};
 	this.update();
 };
 
