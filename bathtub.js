@@ -259,10 +259,10 @@ function SWE(QUANT, LENGTH, n_o, u_o, v_o, g) {
 /* ********************************************************************************* */
 /* visualization using canvas & simple colors                                        */
 function CanvasBathtub($ctnr) {
-	var Q = 200;
+	var Q = 150;
 
-	this.width = 500;
-	this.height = 500;
+	this.width = 750;
+	this.height = 750;
 	this.canvas = document.createElement("canvas");
 	this.canvas.setAttribute("id", "conway");
 	this.canvas.setAttribute("width", this.width);
@@ -270,7 +270,7 @@ function CanvasBathtub($ctnr) {
 	$ctnr.append($(this.canvas));
 	this.context = this.canvas.getContext("2d");
 	this.context.imageSmoothingEnabled = false;
-	this.id = undefined;
+	this.running = true;
 	var system = new SWE(Q, this.width);
 	console.log(system);
 	var self = this;
@@ -279,17 +279,15 @@ function CanvasBathtub($ctnr) {
 	var now;
 	var dt;
 
-	// play sounds
-	window.AudioContext = window.AudioContext||window.webkitAudioContext;
-    this.acontext = new AudioContext();
-
 	$(this.canvas).click(function(e) {
 		var x = Math.floor(Math.floor((e.pageX-$(self.canvas).offset().left)) / (system.dd));
 		var y = Math.floor(Math.floor((e.pageY-$(self.canvas).offset().top)) / (system.dd));
     	// pause and drip a plip at x,y
-    	clearInterval(this.id);
+    	self.running = false;
     	system.plip(x,y);
     	then = Date.now() - 1;
+    	self.update();
+    	self.running = true;
     	self.loop();
     });
 
@@ -323,17 +321,18 @@ function CanvasBathtub($ctnr) {
 	};
 
 	this.loop = function() {
-		this.id = setInterval(function() {
-			now = Date.now();
-			dt = now - then;
-			system.step(dt / 10000);
-			then = now;
-		}, 1); // fast as possible i guess. system is more stable with lower dt values.
+		console.log("loop")
+		now = Date.now();
+		dt = now - then;
+		system.step(dt / 10000);
+		then = now;
+		if (self.running) {
+			window.requestAnimationFrame(self.loop);
+		}
 	};
 
 	this.cleanup = function() { 
-		clearInterval(self.id);
-
+		this.running = false;
 	};
 	this.update();
 };
